@@ -2,14 +2,19 @@
 #include <iostream>
 #include <vector>
 
-// include shape and shader header files.
+// GL debugging header.
 #include "GLerror.h"
+// SDL functionality.
 #include "SDL_Start.h"
+// Almost everything is derrived from this class.
 #include "Triangle_T.h"
+// Background rendering.
 #include "Square.h"
+// Camera controller.
 #include "Camera.h"
-#include "Cube.h"
+// Models are derrived from this class.
 #include "Model.h"
+// instead of relying on raw vertices, this class parses data from specified .obj files.
 #include "ModelLoaderClass.h"
 #ifndef TEXTURECLASS_H
 #define TEXTURECLASS_H
@@ -28,43 +33,25 @@
 #include "SDL.h"
 #include "SDL_image.h"
 
-// include openGL.
-#define GLM_FORCE_RADIANS // force glm to use radians.
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 // basic variables.
 SDL_Event event;
 SDL_Window *win;
 bool windowOpen = true;
 bool isFullScreen = false;
-float bubbleSpeed = -0.001f;
-float radius;
 float angle = 0;
-// screen boundaries for collision tests.
-float bX_r = 2.0f;
-float bX_l = -2.0f;
-float bY_t = 1.0f;
-float bY_b = -1.0f;
-// screen centre variables.
-float centreX = 0.0f;
-float centreY = 0.0f;
+
 // window aspect, height and width.
 int w;
 int h;
 float aspect;
 int left;
 int newwidth;
-int newheight;
 
-// transform matrices. (not sure why these are all intitialised globally.
-glm::mat4 modelMatrix;
+// transform matrices for first model.
 glm::mat4 viewMatrix;
 glm::mat4 projectionMatrix;
 glm::mat4 normalMatrix;
 
-glm::mat4 translate;
 glm::mat4 rotate;
 glm::mat4 scale;
 glm::mat4 backgroundTranslate;
@@ -74,17 +61,8 @@ glm::mat4 modelRotate;
 glm::mat4 modelScale;
 glm::mat4 modelTranslate;
 
-glm::mat4 modelMatrix2;
-glm::mat4 viewMatrix2;
-glm::mat4 projectionMatrix2;
+// transform matrices for second model.
 glm::mat4 normalMatrix2;
-
-glm::mat4 translate2;
-glm::mat4 rotate2;
-glm::mat4 scale2;
-glm::mat4 backgroundTranslate2;
-glm::mat4 backgroundScale2;
-glm::vec3 b_scaleFactor2;
 glm::mat4 modelRotate2;
 glm::mat4 modelScale2;
 glm::mat4 modelTranslate2;
@@ -92,25 +70,123 @@ glm::mat4 modelTranslate2;
 // create camera object.
 Camera cam;
 
-// camera object variables.
-glm::vec3 camPos;
-glm::vec3 camTarget;
-
 // lighting variables.
 glm::vec3 lightCol;
 glm::vec3 lightPosition;
-glm::vec3 viewPosition;
-float ambientIntensity;
 
-// what is this?
+// can't change this.
 bool flag = true;
 
-// function prototypes. (look these up).
-void handleInput();
+//==========================================================================================================================================
+// Handle User Input
+//==========================================================================================================================================
+void handleInput()
+{
+	// poll for SDL events.
+	if (SDL_PollEvent(&event))
+	{
+		// when SDL is shutdown, quit application
+		if (event.type == SDL_QUIT)
+		{
+			windowOpen = false;
+		}
+		// handle when window is resized.
+		if (event.type == SDL_WINDOWEVENT)
+		{
+			switch (event.window.event)
+			{
+			case SDL_WINDOWEVENT_RESIZED:
+				std::cout << "Window resized w:" << w << " h:" << h << std::endl;
+				SDL_GetWindowSize(win, &w, &h);
+				newwidth = h * aspect;
+				left = (w - newwidth) / 2;
+				glViewport(left, 0, newwidth, h);
+				break;
+			default:
+				break;
+			}
+		}
 
-//============================================================================================
+		// handle all key events.
+		if (event.type == SDL_KEYDOWN)
+		{
+			switch (event.key.keysym.sym)
+			{
+				// model movement.
+			case SDLK_UP:
+				// translate cube up when up key pressed.
+				modelTranslate2 = glm::translate(modelTranslate2, glm::vec3((float)cos(angle) * 0.02f, (float)sin(angle) * 0.02f, 0.0f));
+				break;
+			case SDLK_LEFT:
+				// change the angle (45 degrees) clockwise at which to translate the model by.
+				angle += glm::radians(45.0f);
+				rotate = glm::rotate(rotate, glm::radians(10.0f), glm::vec3(0, 0, 1));
+				break;
+			case SDLK_RIGHT:
+				// change the angle (45 degrees) anti-clockwise at which to translate the model by.
+				angle -= glm::radians(45.0f);
+				rotate = glm::rotate(rotate, glm::radians(-10.0f), glm::vec3(0, 0, 1));
+				break;
+
+				// camera movement.
+			case SDLK_q:
+				// move camera 'forward' in the -ve z direction
+				cam.camZPos -= cam.camSpeed;
+				break;
+			case SDLK_e:
+				// move camera 'backwards' in +ve z direction
+				cam.camZPos += cam.camSpeed;
+				break;
+			case SDLK_a:
+				// move camera left
+				// move camera target with position
+				cam.camXPos -= cam.camSpeed;
+				cam.camXTarget -= cam.camSpeed;
+				break;
+			case SDLK_d:
+				// move camera right
+				// move camera target with position
+				cam.camXPos += cam.camSpeed;
+				cam.camXTarget += cam.camSpeed;
+				break;
+			case SDLK_w:
+				// move camera up
+				cam.camYPos += cam.camSpeed;
+				cam.camYTarget += cam.camSpeed;
+				break;
+			case SDLK_s:
+				// move camera down
+				cam.camYPos -= cam.camSpeed;
+				cam.camYTarget -= cam.camSpeed;
+				break;
+			
+				// lighting.
+			case SDLK_f:
+				// move light left.
+				lightPosition.x -= 0.1f;
+				break;
+			case SDLK_h:
+				// move light right.
+				lightPosition.x += 0.1f;
+				break;
+			case SDLK_g:
+				// move light up.
+				// setting this to one to seem to fix the problem of the light source not moving.
+				lightPosition.y += 1.1f;
+				// move light down.
+			case SDLK_b:
+				lightPosition.y -= 0.1f;
+				break;
+			default:
+				break;
+			}
+		}
+	}
+}
+
+//==========================================================================================================================================
 int main(int argc, char *argv[]) {
-//============================================================================================
+//==========================================================================================================================================
 	
 	// initialise SDL.
 	SDL_Start sdl;
@@ -195,7 +271,7 @@ int main(int argc, char *argv[]) {
 
 	errorLabel = 3;
 
-	// set uniform variables for cube model.
+	// set uniform variables for BOTH models.
 	int modelLocation;
 	int viewLocation;
 	int projectionLocation;
@@ -209,11 +285,7 @@ int main(int argc, char *argv[]) {
 	int normalMatrixLocation;
 	int lightPositionLocation;
 
-	/*
-	set uniform variables for second sphere model.
-	*/
-
-	// GL int for tracking time?
+	// GL ints for tracking time.
 	GLuint currentTime = 0;
 	GLuint lastTime = 0;
 	GLuint elapsedTime = 0;
@@ -221,11 +293,11 @@ int main(int argc, char *argv[]) {
 	// lighting postion.
 	lightPosition = glm::vec3(1.0f, 0.0f, 0.5f);
 
-	// light colour setting (might get rid of this). changing values simulates different light sources.
+	// light colour setting. changing values simulates different light sources.
 	glm::vec3 lightColour = glm::vec3(1.0f, 1.0f, 0.98f);
 
 	// light for the background
-	ambientIntensity = 1.0f;
+	float ambientIntensity = 1.0f;
 	// light distance setting
 	lightCol = glm::vec3(1.0f, 1.0f, 0.98f);
 
@@ -239,12 +311,12 @@ int main(int argc, char *argv[]) {
 	backgroundScale = glm::mat4(1.0f);
 	backgroundTranslate = glm::mat4(1.0f);
 
-	// basic declaration of 3 4x4 object transormation matrices for cube model (scale, rotation, position).
+	// basic declaration of 3 4x4 object transormation matrices for sphere model (scale, rotation, position).
 	modelScale = glm::mat4(1.0f);
 	modelRotate = glm::mat4(1.0f);
 	modelTranslate = glm::mat4(1.0f);
 
-	// basic declaration of 3 4x4 object transormation matrices for sphere model (scale, rotation, position).
+	// basic declaration of 3 4x4 object transormation matrices for cube model (scale, rotation, position).
 	modelScale2 = glm::mat4(1.0f);
 	modelRotate2 = glm::mat4(1.0f);
 	modelTranslate2 = glm::mat4(1.0f);
@@ -254,11 +326,11 @@ int main(int argc, char *argv[]) {
 	backgroundScale = glm::scale(backgroundScale, glm::vec3(b_scaleFactor));
 	backgroundTranslate = glm::translate(backgroundTranslate, glm::vec3(0.0f, 0.0f, -2.0f));
 
-	// initially scale and place cube model in the scene.
+	// initially scale and place sphere model in the scene.
 	modelScale = glm::scale(modelScale, glm::vec3(0.7f, 0.7f, 0.7f));
 	modelTranslate = glm::translate(modelTranslate, glm::vec3(1.0f, 0.0f, -1.0f));
 
-	// initially scale and place sphere model in the scene.
+	// initially scale and place cube model in the scene.
 	modelScale2 = glm::scale(modelScale2, glm::vec3(0.7f, 0.7f, 0.7f));
 	modelTranslate2 = glm::translate(modelTranslate2, glm::vec3(0.0f, 0.0f, -1.0f));
 
@@ -317,16 +389,17 @@ int main(int argc, char *argv[]) {
 		//==================================================================================================================================
 
 		//==================================================================================================================================
-		// cube model rendering
+		// sphere model rendering
 		//==================================================================================================================================
 
 		// set .obj model
-		glUseProgram(model2.shaderProgram);
+		glUseProgram(model.shaderProgram);
 
 		// lighting uniforms
 		// get and set light colour and position uniform
 		lightColLocation = glGetUniformLocation(model.shaderProgram, "lightCol");
 		glUniform3fv(lightColLocation, 1, glm::value_ptr(lightColour));
+
 		lightPositionLocation = glGetUniformLocation(model.shaderProgram, "lightPos");
 		glUniform3fv(lightPositionLocation, 1, glm::value_ptr(lightPosition));
 
@@ -351,7 +424,7 @@ int main(int argc, char *argv[]) {
 		//==================================================================================================================================
 
 		//==================================================================================================================================
-		// sphere model rendering
+		// cube model rendering
 		//==================================================================================================================================
 
 		// set .obj model
@@ -398,109 +471,8 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 //==========================================================================================================================================
-// Handle User Input Function
-//==========================================================================================================================================
-void handleInput()
-{
-	//*****************************
-		//SDL handled input
-		//Any input to the program is done here
 
-	if (SDL_PollEvent(&event))
-	{
-		if (event.type == SDL_QUIT)
-		{
-			windowOpen = false;
-		}
-		if (event.type == SDL_WINDOWEVENT)
-		{
-			switch (event.window.event)
-			{
-			case SDL_WINDOWEVENT_RESIZED:
-				std::cout << "Window resized w:" << w << " h:" << h << std::endl;
-				SDL_GetWindowSize(win, &w, &h);
-				newwidth = h * aspect;
-				left = (w - newwidth) / 2;
-				glViewport(left, 0, newwidth, h);
-				break;
-				
 
-			default:
-				break;
-			}
-		}
-		
-		if (event.type == SDL_KEYDOWN)
-		{
-			switch (event.key.keysym.sym)
-			{
-			
-			case SDLK_UP:
-				modelTranslate2 = glm::translate(modelTranslate2, glm::vec3((float)cos(angle)*0.02f, (float)sin(angle)*0.02f, 0.0f));
-				break;
-			case SDLK_LEFT:
-				angle += glm::radians(45.0f);
-				rotate = glm::rotate(rotate,glm::radians(10.0f), glm::vec3(0, 0, 1));
-				break;
-			case SDLK_RIGHT:
-				angle -= glm::radians(45.0f);
-				rotate = glm::rotate(rotate, glm::radians(-10.0f) , glm::vec3(0, 0, 1));
-				break;
-
-			case SDLK_q:
-				// move camera 'forward' in the -ve z direction
-				cam.camZPos -= cam.camSpeed;
-				break;
-			case SDLK_e:
-				// move camera 'backwards' in +ve z direction
-				cam.camZPos += cam.camSpeed;
-				break;
-			case SDLK_a:
-				// move camera left
-				// move camera target with position
-				cam.camXPos -= cam.camSpeed;
-				cam.camXTarget -= cam.camSpeed;
-				break;
-			case SDLK_d:
-				// move camera right
-				// move camera target with position
-				cam.camXPos += cam.camSpeed;
-				cam.camXTarget += cam.camSpeed;
-				break;
-
-			case SDLK_w:
-				// move camera up
-				cam.camYPos += cam.camSpeed;
-				cam.camYTarget += cam.camSpeed;
-				break;
-			case SDLK_s:
-				// move camera down
-				cam.camYPos -= cam.camSpeed;
-				cam.camYTarget -= cam.camSpeed;
-				break;
-				// move light left.
-			case SDLK_f:
-				lightPosition.x -= 0.1f;
-				break;
-				// move light right.
-			case SDLK_h:
-				lightPosition.x += 0.1f;
-				break;
-				// move light up.
-			case SDLK_g:
-				// setting this to one to seem to fix the problem of the light source not moving.
-				lightPosition.y += 1.1f;
-				// move light down.
-			case SDLK_b:
-				lightPosition.y -= 0.1f;
-				break;
-			default:
-				break;
-			
-			}
-		}
-	}
-}
 //==========================================================================================================================================
 #endif
 #endif

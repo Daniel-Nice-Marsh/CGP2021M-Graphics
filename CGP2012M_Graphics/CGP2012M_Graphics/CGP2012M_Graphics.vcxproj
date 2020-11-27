@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
-    <ClInclude Include="Cube.h" />
     <ClInclude Include="GLerror.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="ModelLoaderClass.h" />
