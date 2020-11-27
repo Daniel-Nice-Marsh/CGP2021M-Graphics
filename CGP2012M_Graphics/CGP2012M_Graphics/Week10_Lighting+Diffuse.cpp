@@ -6,8 +6,6 @@
 #include "GLerror.h"
 #include "SDL_Start.h"
 #include "Triangle_T.h"
-#include "Circle.h"
-#include "CircleTexture.h"
 #include "Square.h"
 #include "Camera.h"
 #include "Cube.h"
@@ -108,7 +106,6 @@ float ambientIntensity;
 bool flag = true;
 
 // function prototypes. (look these up).
-CircleTexture updatePositions(CircleTexture c);
 void handleInput();
 
 //============================================================================================
@@ -182,7 +179,7 @@ int main(int argc, char *argv[]) {
 	texArray[0].setBuffers();
 
 	// load sphere texture and set buffers.
-	texArray[1].load("..//..//Assets//Textures//bubble.png");
+	texArray[1].load("..//..//Assets//Textures//lava.png");
 	texArray[1].setBuffers();
 
 	// load cube texture and set buffers.
@@ -312,6 +309,7 @@ int main(int argc, char *argv[]) {
 		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 		projectionLocation = glGetUniformLocation(background.shaderProgram, "uProjection");
 		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
 		// tells program to bind the shader.
 		glBindTexture(GL_TEXTURE_2D, texArray[0].texture);
 		// tells program to render to shader.
@@ -322,15 +320,17 @@ int main(int argc, char *argv[]) {
 		// cube model rendering
 		//==================================================================================================================================
 
-		////set .obj model
-		glUseProgram(model.shaderProgram);
-		//lighting uniforms
-		//get and set light colour and position uniform
+		// set .obj model
+		glUseProgram(model2.shaderProgram);
+
+		// lighting uniforms
+		// get and set light colour and position uniform
 		lightColLocation = glGetUniformLocation(model.shaderProgram, "lightCol");
 		glUniform3fv(lightColLocation, 1, glm::value_ptr(lightColour));
 		lightPositionLocation = glGetUniformLocation(model.shaderProgram, "lightPos");
 		glUniform3fv(lightPositionLocation, 1, glm::value_ptr(lightPosition));
-		//rotation
+
+		// rotate models.
 		modelRotate = glm::rotate(modelRotate, (float)elapsedTime / 2000, glm::vec3(0.0f, 1.0f, 0.0f));
 		importModelLocation = glGetUniformLocation(model.shaderProgram, "uModel");
 		glUniformMatrix4fv(importModelLocation, 1, GL_FALSE, glm::value_ptr(modelTranslate*modelRotate*modelScale));
@@ -338,11 +338,11 @@ int main(int argc, char *argv[]) {
 		glUniformMatrix4fv(importViewLocation, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 		importProjectionLocation = glGetUniformLocation(model.shaderProgram, "uProjection");
 		glUniformMatrix4fv(importProjectionLocation, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-		//set the normal matrix to send to the vertex shader
-		//Light calculations take place in model-view space
-		//So we calculate the normal matrix in that space
+
+		// set normal matrix.
 		normalMatrix = glm::transpose(glm::inverse(modelTranslate*modelRotate*modelScale * viewMatrix));
-		//set the normalMatrix in the shaders
+
+		// set the normalMatrix in the shaders
 		glUseProgram(model.shaderProgram);
 		normalMatrixLocation = glGetUniformLocation(model.shaderProgram, "uNormalMatrix");
 		glUniformMatrix4fv(normalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
@@ -365,7 +365,7 @@ int main(int argc, char *argv[]) {
 		lightPositionLocation = glGetUniformLocation(model.shaderProgram, "lightPos");
 		glUniform3fv(lightPositionLocation, 1, glm::value_ptr(lightPosition));
 
-		//rotation
+		// model rotation.
 		modelRotate = glm::rotate(modelRotate, (float)elapsedTime / 2000, glm::vec3(0.0f, 1.0f, 0.0f));
 		importModelLocation = glGetUniformLocation(model.shaderProgram, "uModel");
 		glUniformMatrix4fv(importModelLocation, 1, GL_FALSE, glm::value_ptr(modelTranslate2*modelRotate*modelScale));
@@ -373,11 +373,11 @@ int main(int argc, char *argv[]) {
 		glUniformMatrix4fv(importViewLocation, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 		importProjectionLocation = glGetUniformLocation(model.shaderProgram, "uProjection");
 		glUniformMatrix4fv(importProjectionLocation, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-		//set the normal matrix to send to the vertex shader
-		//Light calculations take place in model-view space
-		//So we calculate the normal matrix in that space
+
+		// set normal matrix.
 		normalMatrix = glm::transpose(glm::inverse(modelTranslate2*modelRotate*modelScale * viewMatrix));
-		//set the normalMatrix in the shaders
+
+		// set the normal matrix.
 		glUseProgram(model.shaderProgram);
 		normalMatrixLocation = glGetUniformLocation(model.shaderProgram, "uNormalMatrix");
 		glUniformMatrix4fv(normalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix2));
@@ -388,7 +388,7 @@ int main(int argc, char *argv[]) {
 		// update the window after everything has been rendered in the loop.
 		SDL_GL_SwapWindow(sdl.win);
 
-	}//end loop
+	}// end of game loop. 
 
 	// delete context from memory. (cleanup).
 	SDL_GL_DeleteContext(context);

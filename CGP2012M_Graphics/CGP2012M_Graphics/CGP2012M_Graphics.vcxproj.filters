@@ -21,9 +21,6 @@
     <ClInclude Include="ShaderClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Circle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SDL_Start.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -40,9 +37,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Triangle_AnyT.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CircleTexture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Square.h">
