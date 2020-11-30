@@ -254,13 +254,17 @@ int main(int argc, char *argv[]) {
 	texArray[0].load("..//..//Assets//Textures//space.png");
 	texArray[0].setBuffers();
 
-	// load sphere texture and set buffers.
-	texArray[1].load("..//..//Assets//Textures//lava.png");
+	// load perlin noise texture and set buffers.
+	texArray[1].load("..//..//Assets//Textures//Perlin_Noise.jpg");
 	texArray[1].setBuffers();
 
-	// load cube texture and set buffers.
+	// load lava texture and set buffers.
 	texArray[2].load("..//..//Assets//Textures//lava.png");
 	texArray[2].setBuffers();
+
+	// load ice texture and set buffers.
+	texArray[3].load("..//..//Assets//Textures//ice.jpg");
+	texArray[3].setBuffers();
 
 	errorLabel = 2;
 
@@ -271,7 +275,7 @@ int main(int argc, char *argv[]) {
 
 	errorLabel = 3;
 
-	// set uniform variables for BOTH models.
+	// set uniform variables for model.
 	int modelLocation;
 	int viewLocation;
 	int projectionLocation;
@@ -284,6 +288,14 @@ int main(int argc, char *argv[]) {
 	int lightColLocation;
 	int normalMatrixLocation;
 	int lightPositionLocation;
+
+	int firstTextureLocation;
+	int secondTextureLocation;
+	int thirdTextureLocation;
+
+	int backgroundTextureLocation;
+
+	float timeLocation;
 
 	// GL ints for tracking time.
 	GLuint currentTime = 0;
@@ -328,7 +340,7 @@ int main(int argc, char *argv[]) {
 
 	// initially scale and place sphere model in the scene.
 	modelScale = glm::scale(modelScale, glm::vec3(0.7f, 0.7f, 0.7f));
-	modelTranslate = glm::translate(modelTranslate, glm::vec3(1.0f, 0.0f, -1.0f));
+	modelTranslate = glm::translate(modelTranslate, glm::vec3(0.0f, 0.0f, 0.0f));
 
 	// initially scale and place cube model in the scene.
 	modelScale2 = glm::scale(modelScale2, glm::vec3(0.7f, 0.7f, 0.7f));
@@ -366,6 +378,8 @@ int main(int argc, char *argv[]) {
 		// specify shader program to use for background.
 		glUseProgram(background.shaderProgram);
 
+		backgroundTextureLocation = glGetUniformLocation(model.shaderProgram, "backgroundTex");
+
 		// specify lighting for background.
 		backgroundColourLocation = glGetUniformLocation(background.shaderProgram, "uLightColour");
 		glProgramUniform3fv(background.shaderProgram, backgroundColourLocation, 1, glm::value_ptr(lightCol));
@@ -382,7 +396,10 @@ int main(int argc, char *argv[]) {
 		projectionLocation = glGetUniformLocation(background.shaderProgram, "uProjection");
 		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
-		// tells program to bind the shader.
+		
+		glUniform1i(backgroundTextureLocation, 0);
+		// tells program to bind shader.
+		glActiveTexture(GL_TEXTURE0 + 0); // Texture unit 0
 		glBindTexture(GL_TEXTURE_2D, texArray[0].texture);
 		// tells program to render to shader.
 		background.render();
@@ -392,9 +409,16 @@ int main(int argc, char *argv[]) {
 		// sphere model rendering
 		//==================================================================================================================================
 
-		// set .obj model
 		glUseProgram(model.shaderProgram);
 
+		firstTextureLocation = glGetUniformLocation(model.shaderProgram, "uPerlinTex");
+		secondTextureLocation = glGetUniformLocation(model.shaderProgram, "uLavaTex");
+		thirdTextureLocation = glGetUniformLocation(model.shaderProgram, "uIceTex");
+
+		// time
+		timeLocation = glGetUniformLocation(model.shaderProgram, "uTime");
+		glProgramUniform1f(model.shaderProgram, timeLocation, currentTime);
+		
 		// lighting uniforms
 		// get and set light colour and position uniform
 		lightColLocation = glGetUniformLocation(model.shaderProgram, "lightCol");
@@ -416,46 +440,20 @@ int main(int argc, char *argv[]) {
 		normalMatrix = glm::transpose(glm::inverse(modelTranslate*modelRotate*modelScale * viewMatrix));
 
 		// set the normalMatrix in the shaders
-		glUseProgram(model.shaderProgram);
+		glUniform1i(firstTextureLocation, 0);
+		glUniform1i(secondTextureLocation, 1);
+		glUniform1i(thirdTextureLocation, 2);
 		normalMatrixLocation = glGetUniformLocation(model.shaderProgram, "uNormalMatrix");
 		glUniformMatrix4fv(normalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+		glActiveTexture(GL_TEXTURE0 + 0); // Texture unit 0
 		glBindTexture(GL_TEXTURE_2D, texArray[1].texture);
-		model.render();
-		//==================================================================================================================================
-
-		//==================================================================================================================================
-		// cube model rendering
-		//==================================================================================================================================
-
-		// set .obj model
-		glUseProgram(model.shaderProgram);
-
-		// get and set light colour.
-		lightColLocation = glGetUniformLocation(model.shaderProgram, "lightCol");
-		glUniform3fv(lightColLocation, 1, glm::value_ptr(lightColour));
-
-		// get and set light position.
-		lightPositionLocation = glGetUniformLocation(model.shaderProgram, "lightPos");
-		glUniform3fv(lightPositionLocation, 1, glm::value_ptr(lightPosition));
-
-		// model rotation.
-		modelRotate = glm::rotate(modelRotate, (float)elapsedTime / 2000, glm::vec3(0.0f, 1.0f, 0.0f));
-		importModelLocation = glGetUniformLocation(model.shaderProgram, "uModel");
-		glUniformMatrix4fv(importModelLocation, 1, GL_FALSE, glm::value_ptr(modelTranslate2*modelRotate*modelScale));
-		importViewLocation = glGetUniformLocation(model.shaderProgram, "uView");
-		glUniformMatrix4fv(importViewLocation, 1, GL_FALSE, glm::value_ptr(viewMatrix));
-		importProjectionLocation = glGetUniformLocation(model.shaderProgram, "uProjection");
-		glUniformMatrix4fv(importProjectionLocation, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-
-		// set normal matrix.
-		normalMatrix = glm::transpose(glm::inverse(modelTranslate2*modelRotate*modelScale * viewMatrix));
-
-		// set the normal matrix.
-		glUseProgram(model.shaderProgram);
-		normalMatrixLocation = glGetUniformLocation(model.shaderProgram, "uNormalMatrix");
-		glUniformMatrix4fv(normalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix2));
+		glActiveTexture(GL_TEXTURE0 + 1); // Texture unit 1
 		glBindTexture(GL_TEXTURE_2D, texArray[2].texture);
-		model2.render();
+		glActiveTexture(GL_TEXTURE0 + 2); // Texture unit 1
+		glBindTexture(GL_TEXTURE_2D, texArray[3].texture);
+
+		model.render();
 		//==================================================================================================================================
 
 		// update the window after everything has been rendered in the loop.

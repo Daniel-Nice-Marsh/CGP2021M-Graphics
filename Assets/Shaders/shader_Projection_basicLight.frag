@@ -5,11 +5,11 @@ in vec2 textureCoordinate;
 in vec3 lightColour;
 in float ambientIntensity;
 
-uniform sampler2D aTex;		
+uniform sampler2D backgroundTex;
 
 void main()
 {
-	vec4 texColour = texture(aTex, textureCoordinate);
+	vec4 texColour = texture(backgroundTex, textureCoordinate);
 	vertColour = vec4(  ambientIntensity * lightColour.x * texColour.x, 
 						ambientIntensity * lightColour.y * texColour.y,      	 		
 						ambientIntensity * lightColour.z * texColour.z, 

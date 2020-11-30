@@ -30,7 +30,6 @@ public:
 	//constructor
 	Model() 
 	{
-		//shaders
 		vSh.shaderFileName("..//..//Assets//Shaders//shader_projection_lighting_AD.vert");
 		fSh.shaderFileName("..//..//Assets//Shaders//shader_projection_lighting_AD.frag");
 
