@@ -60,7 +60,9 @@ void main()
 	// store lava tex.
 	vec4 lava = texture(uLavaTex, textureCoordinate);
 
-	vertColour = (lava*barrier) + (ice*(1.0-barrier));
+	vec4 effect = (lava*barrier) + (ice*(1.0-barrier));
+
+	vertColour = (vec4((ambient+diffuse),1.0) * effect);
 	
 /*
 	
